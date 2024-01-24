@@ -1,0 +1,23 @@
+Areas:
+  def1:
+    position:
+      world: "world"
+      max: "0, 0, 0"
+      min: "10,10,10"
+    actions:
+      enter: |-
+        tell "进入区域"
+      leave: |-
+        tell "离开区域"
+      tick: |-
+        tell "在该区域"
+  def2:
+    position:
+      world: "world"
+      min: "5,10,5"
+      max: "0,0,0"
+    actions:
+      enter: |-
+        tell "进入区域2"
+      leave: |-
+        tell "离开区域2"

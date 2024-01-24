@@ -1,0 +1,9 @@
+# 触发冷却
+CommandBaffle:
+  # 毫秒
+  time: 3000
+
+AreaSettings:
+  # 区域内持续执行
+  # Tick / 次
+  TickAction: 20

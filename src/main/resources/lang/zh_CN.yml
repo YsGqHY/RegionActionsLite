@@ -1,0 +1,5 @@
+prefix: "&8[&fRegion Actions Lite&8]"
+
+plugin-reload: "插件已重载"
+plugin-config-reload: "config.yml 配置已重载"
+plugin-areas-reload: "areas.yml 配置已重载"
