@@ -58,7 +58,7 @@ data class AreaSettings(
         private fun runEnterAction(player: Player, id: String) {
             mirrorNow("RegionActionsLite:Actions:Enter") {
                 val actions = areasData[id]!!.actions.enter
-                if (ConfigSettings.baffleCache.hasNext("${player.name}-Enter").not()) {
+                if (ConfigSettings.baffleCache.hasNext("${player.name}-Enter-$id").not()) {
                     return@mirrorNow
                 }
                 actions?.evalKether(player)
@@ -67,7 +67,7 @@ data class AreaSettings(
         private fun runLeaveAction(player: Player, id: String) {
             mirrorNow("RegionActionsLite:Actions:Leave") {
                 val actions = areasData[id]!!.actions.leave
-                if (ConfigSettings.baffleCache.hasNext("${player.name}-Leave").not()) {
+                if (ConfigSettings.baffleCache.hasNext("${player.name}-Leave-$id").not()) {
                     return@mirrorNow
                 }
                 actions?.evalKether(player)
@@ -76,7 +76,7 @@ data class AreaSettings(
         private fun runTickAction(player: Player, id: String) {
             mirrorNow("RegionActionsLite:Actions:Tick") {
                 val actions = areasData[id]!!.actions.tick
-                if (ConfigSettings.baffleCache.hasNext("${player.name}-Tick").not()) {
+                if (ConfigSettings.baffleCache.hasNext("${player.name}-Tick-$id").not()) {
                     return@mirrorNow
                 }
                 actions?.evalKether(player)

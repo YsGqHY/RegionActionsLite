@@ -5,8 +5,7 @@ import kim.hhhhhy.regions.listeners.AreaListener
 import org.bukkit.Bukkit
 import taboolib.common.LifeCycle
 import taboolib.common.platform.Awake
-import taboolib.common.platform.function.console
-import taboolib.common.platform.function.submitAsync
+import taboolib.common.platform.function.*
 import taboolib.common5.Baffle
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
@@ -33,7 +32,7 @@ object ConfigSettings {
 
     @Awake(LifeCycle.ACTIVE)
     fun runTickAction() {
-        submitAsync(now = false, period = actionTick) {
+        submit(now = false, period = actionTick) {
             AreaListener.playerSet.forEach { (player, id) ->
                 Bukkit.getPlayerExact(player)?.let { p ->
                     AreaSettings.runActions(p, id, AreaType.TICK)
