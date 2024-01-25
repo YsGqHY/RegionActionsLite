@@ -8,7 +8,6 @@ import kim.hhhhhy.regions.utils.evalKether
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import taboolib.common.platform.function.console
-import taboolib.common.platform.function.info
 import taboolib.common5.mirrorNow
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration

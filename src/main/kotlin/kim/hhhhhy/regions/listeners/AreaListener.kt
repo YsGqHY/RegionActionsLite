@@ -10,21 +10,11 @@ import taboolib.common.platform.function.info
 object AreaListener {
     val playerSet = mutableSetOf<Pair<String, String>>()
 
-    /***
-     * 玩家进入区域前
-     *      playerSet 没有该玩家 to 区域id
-     *      areas 不为空
-     * 玩家进入区域后
-     *      playerSet 添加该玩家 to 区域id
-     *      执行区域id Kether enter
-     * 玩家退出区域
-     *      playerSet 有该玩家 to 区域id
-     *      areas不包括该玩家的区域id
-     *      执行区域id Kether leave
-     */
     @SubscribeEvent
     fun onPlayerMove(e: PlayerMoveEvent) {
+        val from = e.from
         val to = e.to ?: return
+        if (from.x == to.x && from.y == to.y && from.z == to.z) return
         val player = e.player
         val areas = AreaSettings.getAreas(to)
 
