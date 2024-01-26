@@ -4,6 +4,7 @@ Areas:
       world: "world"
       max: "0, 0, 0"
       min: "10,10,10"
+    tickPeriod: 20
     actions:
       enter: |-
         tell "进入区域"

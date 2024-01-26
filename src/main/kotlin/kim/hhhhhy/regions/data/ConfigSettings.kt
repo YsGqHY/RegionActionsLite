@@ -1,12 +1,7 @@
 package kim.hhhhhy.regions.data
 
-import kim.hhhhhy.regions.data.area.AreaType
-import kim.hhhhhy.regions.listeners.AreaListener
-import org.bukkit.Bukkit
-import taboolib.common.LifeCycle
-import taboolib.common.platform.Awake
+
 import taboolib.common.platform.function.*
-import taboolib.common.platform.service.PlatformExecutor
 import taboolib.common5.Baffle
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
@@ -29,19 +24,7 @@ object ConfigSettings {
         cooldown = config.getLong("CommandBaffle.time", 3000)
         actionTick = config.getLong("AreaSettings.TickAction", 20)
         console().sendInfo("plugin-config-reload")
-        runTickAction().cancel()
-        runTickAction()
-    }
 
-    @Awake(LifeCycle.ACTIVE)
-    fun runTickAction(): PlatformExecutor.PlatformTask {
-        return submit(now = false, period = actionTick) {
-            AreaListener.playerSet.forEach { (player, id) ->
-                Bukkit.getPlayerExact(player)?.let { p ->
-                    AreaSettings.runActions(p, id, AreaType.TICK)
-                }
-            }
-        }
     }
 
 }
