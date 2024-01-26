@@ -92,14 +92,18 @@ data class AreaSettings(
             }
         }
 
-        private fun startTick(player: Player, id: String) {
+        fun startTick(player: Player, id: String) {
             val period = areasData[id]!!.tickPeriod
             playerAreas[player.name to id] = submit(period = period) {
                 runTickAction(player, id)
             }
         }
 
-        private fun stopTick(player: Player, id: String) {
+        fun stopTick(player: Player, id: String? = null) {
+            if (id.isNullOrBlank()) {
+                playerAreas.filter { it.key.first == player.name }.forEach { it.value.cancel() }
+                return
+            }
             playerAreas[player.name to id]?.cancel()
         }
 

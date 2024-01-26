@@ -39,6 +39,7 @@ object AreaListener {
     @SubscribeEvent
     fun onPlayerQuit(e: PlayerQuitEvent) {
         playerSet.removeAll { it.first == e.player.name }
+        AreaSettings.stopTick(e.player)
     }
 
 
