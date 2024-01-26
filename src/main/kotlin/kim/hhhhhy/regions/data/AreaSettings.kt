@@ -52,13 +52,17 @@ data class AreaSettings(
             val x = location.x
             val y = location.y
             val z = location.z
-            return areasData.filter {
-                it.value.position.world == location.world?.name
-                    && (x in it.value.position.xMax .. it.value.position.xMin || x in it.value.position.xMin .. it.value.position.xMax)
-                    && (y in it.value.position.yMax .. it.value.position.yMin || y in it.value.position.yMin .. it.value.position.yMax)
-                    && (z in it.value.position.zMax .. it.value.position.zMin || z in it.value.position.zMin .. it.value.position.zMax)
-            }.map { it.key }
+            val worldName = location.world?.name
 
+            return areasData.filter { area ->
+                val pos = area.value.position
+                val isSameWorld = pos.world == worldName
+                val isXInRange = x in pos.xMin..pos.xMax || x in pos.xMax..pos.xMin
+                val isYInRange = y in pos.yMin..pos.yMax || y in pos.yMax..pos.yMin
+                val isZInRange = z in pos.zMin..pos.zMax || z in pos.zMax..pos.zMin
+
+                isSameWorld && isXInRange && isYInRange && isZInRange
+            }.map { it.key }
         }
 
         private fun runEnterAction(player: Player, id: String) {

@@ -4,9 +4,11 @@ import kim.hhhhhy.regions.data.AreaSettings
 import kim.hhhhhy.regions.data.area.AreaType
 import org.bukkit.Location
 import org.bukkit.entity.Player
+import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.event.player.PlayerTeleportEvent
 import taboolib.common.platform.event.SubscribeEvent
 
 object AreaListener {
@@ -17,6 +19,15 @@ object AreaListener {
         val from = e.from
         val to = e.to ?: return
         if (from.x == to.x && from.y == to.y && from.z == to.z) return
+        val player = e.player
+        check(player, to)
+    }
+
+    @SubscribeEvent
+    fun onTeleport(e: PlayerTeleportEvent) {
+        val from = e.from
+        val to = e.to ?: return
+        if (from.world?.name == to.world?.name && from.x == to.x && from.y == to.y && from.z == to.z) return
         val player = e.player
         check(player, to)
     }
