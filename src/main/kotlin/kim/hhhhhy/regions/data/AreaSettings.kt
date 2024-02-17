@@ -4,6 +4,7 @@ import kim.hhhhhy.regions.data.area.AreaActions
 import kim.hhhhhy.regions.data.area.AreaPosition
 import kim.hhhhhy.regions.data.area.AreaType
 import kim.hhhhhy.regions.data.area.AreaType.*
+import kim.hhhhhy.regions.listeners.AreaListener
 import kim.hhhhhy.regions.utils.evalKether
 import org.bukkit.Location
 import org.bukkit.entity.Player
@@ -67,7 +68,7 @@ data class AreaSettings(
 
         private fun runEnterAction(player: Player, id: String) {
             mirrorNow("RegionActionsLite:Actions:Enter") {
-                val actions = areasData[id]!!.actions.enter
+                val actions = areasData[id]?.actions?.enter
                 if (ConfigSettings.baffleCache.hasNext("${player.name}-Enter-$id").not()) {
                     return@mirrorNow
                 }
@@ -77,7 +78,7 @@ data class AreaSettings(
         }
         private fun runLeaveAction(player: Player, id: String) {
             mirrorNow("RegionActionsLite:Actions:Leave") {
-                val actions = areasData[id]!!.actions.leave
+                val actions = areasData[id]?.actions?.leave
                 if (ConfigSettings.baffleCache.hasNext("${player.name}-Leave-$id").not()) {
                     return@mirrorNow
                 }
@@ -87,7 +88,7 @@ data class AreaSettings(
         }
         private fun runTickAction(player: Player, id: String) {
             mirrorNow("RegionActionsLite:Actions:Tick") {
-                val actions = areasData[id]!!.actions.tick
+                val actions = areasData[id]?.actions?.tick
                 actions?.evalKether(player)
             }
         }
@@ -95,16 +96,27 @@ data class AreaSettings(
         fun startTick(player: Player, id: String) {
             val period = areasData[id]!!.tickPeriod
             playerAreas[player.name to id] = submit(period = period) {
+                if (!playerAreas.contains(player.name to id)) {
+                    cancel()
+                    return@submit
+                }
                 runTickAction(player, id)
             }
         }
 
         fun stopTick(player: Player, id: String? = null) {
             if (id.isNullOrBlank()) {
-                playerAreas.filter { it.key.first == player.name }.forEach { it.value.cancel() }
+                playerAreas.forEach { (k, task) ->
+                    if (k.first != player.name) {
+                        return@forEach
+                    }
+                    task.cancel()
+                    playerAreas.remove(k)
+                }
                 return
             }
             playerAreas[player.name to id]?.cancel()
+            playerAreas.remove(player.name to id)
         }
 
         /**
@@ -125,6 +137,42 @@ data class AreaSettings(
                     runEnterAction(player, id)
                     runLeaveAction(player, id)
                     runTickAction(player, id)
+                }
+            }
+        }
+
+        fun check(player: Player, location: Location) {
+            val areas = getAreas(location)
+
+            if (areas.isNotEmpty()) {
+
+                // 退出某个区域
+                val filter = AreaListener.playerSet.filter { it.first == player.name && it !in areas.map { id -> player.name to id }.toSet() }
+                if (filter.isNotEmpty()) {
+                    filter.forEach { (name, id) ->
+                        if (AreaListener.playerSet.remove(name to id)) {
+                            runActions(player, id, LEAVE)
+                        }
+                    }
+                }
+
+                // 进入区域
+                areas.forEach {
+                    if (AreaListener.playerSet.add(player.name to it)) {
+                        runActions(player, it, ENTER)
+                    }
+                }
+            } else {
+
+                // 退出所有区域
+                val filter = AreaListener.playerSet.filter { it.first == player.name }
+
+                if (filter.isNotEmpty()) {
+                    filter.forEach { (name, id) ->
+                        if (AreaListener.playerSet.remove(name to id)) {
+                            runActions(player, id, LEAVE)
+                        }
+                    }
                 }
             }
         }
