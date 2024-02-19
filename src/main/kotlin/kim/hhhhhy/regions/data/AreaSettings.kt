@@ -8,8 +8,9 @@ import kim.hhhhhy.regions.listeners.AreaListener
 import kim.hhhhhy.regions.utils.evalKether
 import org.bukkit.Location
 import org.bukkit.entity.Player
-import org.bukkit.util.BoundingBox
+import taboolib.module.navigation.BoundingBox
 import taboolib.common.platform.function.console
+import taboolib.common.platform.function.info
 import taboolib.common.platform.function.submit
 import taboolib.common.platform.service.PlatformExecutor
 import taboolib.common5.mirrorNow
@@ -36,7 +37,7 @@ data class AreaSettings(
         /**
          * player.name to id -> task
          */
-        private val playerAreas = ConcurrentHashMap<Pair<String, String>, PlatformExecutor.PlatformTask>()
+        private val playerAreas = ConcurrentHashMap<String, MutableMap<String, PlatformExecutor.PlatformTask>>()
 
         fun reloadArea() {
             playerAreas.clear()
@@ -99,26 +100,26 @@ data class AreaSettings(
 
         private fun startTick(player: Player, id: String) {
             val period = areasData[id]!!.tickPeriod
-            playerAreas[player.name to id] = submit(period = period) {
-                if (!playerAreas.contains(player.name to id)) {
-                    cancel()
+            val tasks = playerAreas.computeIfAbsent(player.name) { ConcurrentHashMap() }
+            tasks[id] = submit(period = period) {
+                if (playerAreas[player.name]?.contains(id) == true) {
+                    runTickAction(player, id)
+                } else {
                     return@submit
                 }
-                runTickAction(player, id)
             }
         }
 
         fun stopTick(player: Player, id: String? = null) {
             if (id.isNullOrBlank()) {
-                playerAreas.filterKeys { it.first == player.name }
-                    .forEach { (_, task) ->
-                        task.cancel()
-                    }
-                playerAreas.keys.removeAll { it.first == player.name }
+                playerAreas[player.name]?.forEach { (_, task) ->
+                    task.cancel()
+                }
+                playerAreas.remove(player.name)
                 return
             }
-            playerAreas[player.name to id]?.cancel()
-            playerAreas.remove(player.name to id)
+            playerAreas[player.name]?.get(id)?.cancel()
+            playerAreas[player.name]?.remove(id)
         }
 
         /**

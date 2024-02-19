@@ -10,6 +10,7 @@ taboolib {
     install("common-5")
     install("module-chat")
     install("module-configuration")
+    install("module-navigation")
     install("module-kether")
     install("module-effect")
     install("module-lang")
