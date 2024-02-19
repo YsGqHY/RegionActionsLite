@@ -8,6 +8,7 @@ import kim.hhhhhy.regions.listeners.AreaListener
 import kim.hhhhhy.regions.utils.evalKether
 import org.bukkit.Location
 import org.bukkit.entity.Player
+import org.bukkit.util.BoundingBox
 import taboolib.common.platform.function.console
 import taboolib.common.platform.function.submit
 import taboolib.common.platform.service.PlatformExecutor
@@ -16,6 +17,8 @@ import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
 import taboolib.module.lang.sendInfo
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.max
+import kotlin.math.min
 
 
 data class AreaSettings(
@@ -49,21 +52,22 @@ data class AreaSettings(
             console().sendInfo("plugin-areas-reload")
         }
 
-        fun getAreas(location: Location): List<String> {
+        private fun getAreas(location: Location): List<String> {
             val x = location.x
             val y = location.y
             val z = location.z
             val worldName = location.world?.name
 
-            return areasData.filter { area ->
-                val pos = area.value.position
-                val isSameWorld = pos.world == worldName
-                val isXInRange = x in pos.xMin..pos.xMax || x in pos.xMax..pos.xMin
-                val isYInRange = y in pos.yMin..pos.yMax || y in pos.yMax..pos.yMin
-                val isZInRange = z in pos.zMin..pos.zMax || z in pos.zMax..pos.zMin
-
-                isSameWorld && isXInRange && isYInRange && isZInRange
-            }.map { it.key }
+            return areasData
+                .filter { (_, area) ->
+                    val pos = area.position
+                    val isSameWorld = pos.world == worldName
+                    isSameWorld && BoundingBox(
+                        min(pos.xMin, pos.xMax), min(pos.yMin, pos.yMax), min(pos.zMin, pos.zMax),
+                        max(pos.xMin, pos.xMax), max(pos.yMin, pos.yMax), max(pos.zMin, pos.zMax)
+                    ).contains(x, y, z)
+                }
+                .map { (key, _) -> key }
         }
 
         private fun runEnterAction(player: Player, id: String) {
@@ -93,7 +97,7 @@ data class AreaSettings(
             }
         }
 
-        fun startTick(player: Player, id: String) {
+        private fun startTick(player: Player, id: String) {
             val period = areasData[id]!!.tickPeriod
             playerAreas[player.name to id] = submit(period = period) {
                 if (!playerAreas.contains(player.name to id)) {
@@ -106,13 +110,11 @@ data class AreaSettings(
 
         fun stopTick(player: Player, id: String? = null) {
             if (id.isNullOrBlank()) {
-                playerAreas.forEach { (k, task) ->
-                    if (k.first != player.name) {
-                        return@forEach
+                playerAreas.filterKeys { it.first == player.name }
+                    .forEach { (_, task) ->
+                        task.cancel()
                     }
-                    task.cancel()
-                    playerAreas.remove(k)
-                }
+                playerAreas.keys.removeAll { it.first == player.name }
                 return
             }
             playerAreas[player.name to id]?.cancel()
@@ -122,7 +124,7 @@ data class AreaSettings(
         /**
          * 执行一次区域类型动作
          */
-        fun runActions(player: Player, id: String, type: AreaType) {
+        private fun runActions(player: Player, id: String, type: AreaType) {
             when (type) {
                 ENTER -> {
                     runEnterAction(player, id)
