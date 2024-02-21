@@ -17,6 +17,7 @@ import taboolib.common5.mirrorNow
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
 import taboolib.module.lang.sendInfo
+import taboolib.platform.util.onlinePlayers
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.max
 import kotlin.math.min
@@ -40,7 +41,6 @@ data class AreaSettings(
         private val playerAreas = ConcurrentHashMap<String, MutableMap<String, PlatformExecutor.PlatformTask>>()
 
         fun reloadArea() {
-            playerAreas.clear()
             areasData.clear()
             val section = areasConfig.getConfigurationSection("Areas") ?: return
             section.getKeys(false).forEach { id ->
@@ -49,6 +49,11 @@ data class AreaSettings(
                 val actions = AreaActions(root.getConfigurationSection("actions"))
                 val tickPeriod = root.getLong("tickPeriod", ConfigSettings.config.getLong("AreaSettings.TickAction", 20))
                 areasData[id] = AreaSettings(position, actions, tickPeriod)
+            }
+            playerAreas.clear()
+            onlinePlayers.forEach {
+                stopTick(it)
+                check(it, it.location)
             }
             console().sendInfo("plugin-areas-reload")
         }
