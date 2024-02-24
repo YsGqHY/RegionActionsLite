@@ -22,6 +22,7 @@ object AreaListener {
 
     @SubscribeEvent
     fun onPlayerChangeWorld(e: PlayerChangedWorldEvent) {
+        AreaSettings.stopTick(e.player)
         AreaSettings.check(e.player, e.player.location)
     }
 
