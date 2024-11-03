@@ -10,10 +10,8 @@ import org.bukkit.Location
 import org.bukkit.entity.Player
 import taboolib.module.navigation.BoundingBox
 import taboolib.common.platform.function.console
-import taboolib.common.platform.function.info
 import taboolib.common.platform.function.submit
 import taboolib.common.platform.service.PlatformExecutor
-import taboolib.common5.mirrorNow
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
 import taboolib.module.lang.sendInfo
@@ -68,39 +66,34 @@ data class AreaSettings(
                 .filter { (_, area) ->
                     val pos = area.position
                     val isSameWorld = pos.world == worldName
-                    isSameWorld && BoundingBox(
+                    val box = BoundingBox(
                         min(pos.xMin, pos.xMax), min(pos.yMin, pos.yMax), min(pos.zMin, pos.zMax),
                         max(pos.xMin, pos.xMax), max(pos.yMin, pos.yMax), max(pos.zMin, pos.zMax)
-                    ).contains(x, y, z)
+                    )
+                    isSameWorld && x >= box.minX && x <= box.maxX && y >= box.minY && y <= box.maxY && z >= box.minZ && z <= box.maxZ
                 }
                 .map { (key, _) -> key }
         }
 
         private fun runEnterAction(player: Player, id: String) {
-            mirrorNow("RegionActionsLite:Actions:Enter") {
-                val actions = areasData[id]?.actions?.enter
-                if (ConfigSettings.baffleCache.hasNext("${player.name}-Enter-$id").not()) {
-                    return@mirrorNow
-                }
-                actions?.evalKether(player)
-                startTick(player, id)
+            val actions = areasData[id]?.actions?.enter
+            if (ConfigSettings.baffleCache.hasNext("${player.name}-Enter-$id").not()) {
+                return
             }
+            actions?.evalKether(player)
+            startTick(player, id)
         }
         private fun runLeaveAction(player: Player, id: String) {
-            mirrorNow("RegionActionsLite:Actions:Leave") {
-                val actions = areasData[id]?.actions?.leave
-                if (ConfigSettings.baffleCache.hasNext("${player.name}-Leave-$id").not()) {
-                    return@mirrorNow
-                }
-                actions?.evalKether(player)
-                stopTick(player, id)
+            val actions = areasData[id]?.actions?.leave
+            if (ConfigSettings.baffleCache.hasNext("${player.name}-Leave-$id").not()) {
+                return
             }
+            actions?.evalKether(player)
+            stopTick(player, id)
         }
         private fun runTickAction(player: Player, id: String) {
-            mirrorNow("RegionActionsLite:Actions:Tick") {
-                val actions = areasData[id]?.actions?.tick
-                actions?.evalKether(player)
-            }
+            val actions = areasData[id]?.actions?.tick
+            actions?.evalKether(player)
         }
 
         private fun startTick(player: Player, id: String) {
