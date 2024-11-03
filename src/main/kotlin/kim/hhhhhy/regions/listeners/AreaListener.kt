@@ -7,15 +7,18 @@ import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.player.PlayerTeleportEvent
 import taboolib.common.platform.event.SubscribeEvent
+import taboolib.platform.util.isBlockMovement
+import taboolib.platform.util.isMovement
 
 object AreaListener {
     val playerSet = mutableSetOf<Pair<String, String>>()
 
     @SubscribeEvent
     fun onPlayerMove(e: PlayerMoveEvent) {
-        val from = e.from
         val to = e.to ?: return
-        if (from.x == to.x && from.y == to.y && from.z == to.z) return
+        if (!e.isBlockMovement()) {
+            return
+        }
         val player = e.player
         AreaSettings.check(player, to)
     }

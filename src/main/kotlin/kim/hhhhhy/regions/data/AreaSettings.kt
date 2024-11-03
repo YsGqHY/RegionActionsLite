@@ -10,6 +10,7 @@ import org.bukkit.Location
 import org.bukkit.entity.Player
 import taboolib.module.navigation.BoundingBox
 import taboolib.common.platform.function.console
+import taboolib.common.platform.function.info
 import taboolib.common.platform.function.submit
 import taboolib.common.platform.service.PlatformExecutor
 import taboolib.module.configuration.Config
@@ -57,9 +58,9 @@ data class AreaSettings(
         }
 
         private fun getAreas(location: Location): List<String> {
-            val x = location.x
-            val y = location.y
-            val z = location.z
+            val x = location.blockX
+            val y = location.blockY
+            val z = location.blockZ
             val worldName = location.world?.name
 
             return areasData
@@ -84,12 +85,12 @@ data class AreaSettings(
             startTick(player, id)
         }
         private fun runLeaveAction(player: Player, id: String) {
+            stopTick(player, id)
             val actions = areasData[id]?.actions?.leave
             if (ConfigSettings.baffleCache.hasNext("${player.name}-Leave-$id").not()) {
                 return
             }
             actions?.evalKether(player)
-            stopTick(player, id)
         }
         private fun runTickAction(player: Player, id: String) {
             val actions = areasData[id]?.actions?.tick
