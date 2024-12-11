@@ -1,7 +1,7 @@
 # 触发冷却
 CommandBaffle:
   # 毫秒
-  time: 1000
+  time: 10
 
 AreaSettings:
   # 区域内持续执行

@@ -8,13 +8,15 @@ import kim.hhhhhy.regions.listeners.AreaListener
 import kim.hhhhhy.regions.utils.evalKether
 import org.bukkit.Location
 import org.bukkit.entity.Player
+import org.bukkit.event.Cancellable
+import org.bukkit.event.Event
 import taboolib.module.navigation.BoundingBox
 import taboolib.common.platform.function.console
-import taboolib.common.platform.function.info
 import taboolib.common.platform.function.submit
 import taboolib.common.platform.service.PlatformExecutor
 import taboolib.module.configuration.Config
 import taboolib.module.configuration.Configuration
+import taboolib.module.kether.*
 import taboolib.module.lang.sendInfo
 import taboolib.platform.util.onlinePlayers
 import java.util.concurrent.ConcurrentHashMap
@@ -52,9 +54,13 @@ data class AreaSettings(
             playerAreas.clear()
             onlinePlayers.forEach {
                 stopTick(it)
-                check(it, it.location)
+                check(it, it.location, it.location)
             }
             console().sendInfo("plugin-areas-reload")
+        }
+
+        fun ScriptFrame.getEvent(): Event {
+            return variables().get<Any?>("@RegionEvent").orElse(null) as? Event ?: error("No event selected.")
         }
 
         private fun getAreas(location: Location): List<String> {
@@ -76,33 +82,33 @@ data class AreaSettings(
                 .map { (key, _) -> key }
         }
 
-        private fun runEnterAction(player: Player, id: String) {
+        private fun runEnterAction(player: Player, id: String, from: Location, event: Event?) {
             val actions = areasData[id]?.actions?.enter
-            if (ConfigSettings.baffleCache.hasNext("${player.name}-Enter-$id").not()) {
+            if (ConfigSettings.cooldown > 0 && ConfigSettings.baffleCache.hasNext("${player.name}-Enter-$id").not()) {
                 return
             }
-            actions?.evalKether(player)
-            startTick(player, id)
+            actions?.evalKether(player, mapOf("frX" to from.x, "frY" to from.y, "frZ" to from.z, "frW" to from.world?.name), listOf("@RegionEvent" to event))
+            startTick(player, id, from, event)
         }
-        private fun runLeaveAction(player: Player, id: String) {
+        private fun runLeaveAction(player: Player, id: String, from: Location, event: Event?) {
             stopTick(player, id)
             val actions = areasData[id]?.actions?.leave
-            if (ConfigSettings.baffleCache.hasNext("${player.name}-Leave-$id").not()) {
+            if (ConfigSettings.cooldown > 0 && ConfigSettings.baffleCache.hasNext("${player.name}-Leave-$id").not()) {
                 return
             }
-            actions?.evalKether(player)
+            actions?.evalKether(player, mapOf("frX" to from.x, "frY" to from.y, "frZ" to from.z, "frW" to from.world?.name), listOf("@RegionEvent" to event))
         }
-        private fun runTickAction(player: Player, id: String) {
+        private fun runTickAction(player: Player, id: String, from: Location, event: Event?) {
             val actions = areasData[id]?.actions?.tick
-            actions?.evalKether(player)
+            actions?.evalKether(player, mapOf("frX" to from.x, "frY" to from.y, "frZ" to from.z, "frW" to from.world?.name), listOf("@RegionEvent" to event))
         }
 
-        private fun startTick(player: Player, id: String) {
+        private fun startTick(player: Player, id: String, from: Location, event: Event?) {
             val period = areasData[id]!!.tickPeriod
             val tasks = playerAreas.computeIfAbsent(player.name) { ConcurrentHashMap() }
             tasks[id] = submit(period = period) {
                 if (playerAreas[player.name]?.contains(id) == true) {
-                    runTickAction(player, id)
+                    runTickAction(player, id, from, event)
                 } else {
                     return@submit
                 }
@@ -124,26 +130,26 @@ data class AreaSettings(
         /**
          * 执行一次区域类型动作
          */
-        private fun runActions(player: Player, id: String, type: AreaType) {
+        private fun runActions(player: Player, id: String, type: AreaType, from: Location, event: Event? = null) {
             when (type) {
                 ENTER -> {
-                    runEnterAction(player, id)
+                    runEnterAction(player, id, from, event)
                 }
                 LEAVE -> {
-                    runLeaveAction(player, id)
+                    runLeaveAction(player, id, from, event)
                 }
                 TICK -> {
-                    runTickAction(player, id)
+                    runTickAction(player, id, from, event)
                 }
                 ALL -> {
-                    runEnterAction(player, id)
-                    runLeaveAction(player, id)
-                    runTickAction(player, id)
+                    runEnterAction(player, id, from, event)
+                    runLeaveAction(player, id, from, event)
+                    runTickAction(player, id, from, event)
                 }
             }
         }
 
-        fun check(player: Player, location: Location) {
+        fun check(player: Player, location: Location, from: Location, event: Event? = null) {
             val areas = getAreas(location)
 
             if (areas.isNotEmpty()) {
@@ -153,7 +159,7 @@ data class AreaSettings(
                 if (filter.isNotEmpty()) {
                     filter.forEach { (name, id) ->
                         if (AreaListener.playerSet.remove(name to id)) {
-                            runActions(player, id, LEAVE)
+                            runActions(player, id, LEAVE, from, event)
                         }
                     }
                 }
@@ -161,7 +167,7 @@ data class AreaSettings(
                 // 进入区域
                 areas.forEach {
                     if (AreaListener.playerSet.add(player.name to it)) {
-                        runActions(player, it, ENTER)
+                        runActions(player, it, ENTER, from, event)
                     }
                 }
             } else {
@@ -172,9 +178,20 @@ data class AreaSettings(
                 if (filter.isNotEmpty()) {
                     filter.forEach { (name, id) ->
                         if (AreaListener.playerSet.remove(name to id)) {
-                            runActions(player, id, LEAVE)
+                            runActions(player, id, LEAVE, from, event)
                         }
                     }
+                }
+            }
+        }
+
+
+        @KetherParser(["region-event-cancel"], shared = true)
+        fun parserCancel() = scriptParser {
+            actionNow {
+                val e = getEvent()
+                if (e is Cancellable) {
+                    e.isCancelled = true
                 }
             }
         }

@@ -16,32 +16,32 @@ object AreaListener {
     @SubscribeEvent
     fun onPlayerMove(e: PlayerMoveEvent) {
         val to = e.to ?: return
-        if (!e.isBlockMovement()) {
+        if (!e.isMovement()) {
             return
         }
         val player = e.player
-        AreaSettings.check(player, to)
+        AreaSettings.check(player, to, e.from, e)
     }
 
     @SubscribeEvent
     fun onPlayerChangeWorld(e: PlayerChangedWorldEvent) {
         AreaSettings.stopTick(e.player)
-        AreaSettings.check(e.player, e.player.location)
+        AreaSettings.check(e.player, e.player.location, e.from.spawnLocation, e)
     }
 
     @SubscribeEvent
     fun onTeleport(e: PlayerTeleportEvent) {
         val from = e.from
         val to = e.to ?: return
-        if (from.world?.name == to.world?.name && from.x == to.x && from.y == to.y && from.z == to.z) return
         val player = e.player
-        AreaSettings.check(player, to)
+        AreaSettings.check(player, to, from, e)
     }
 
     @SubscribeEvent
     fun onPlayerJoin(e: PlayerJoinEvent) {
-        AreaSettings.check(e.player, e.player.location)
+        AreaSettings.check(e.player, e.player.location, e.player.location, e)
     }
+
     @SubscribeEvent
     fun onPlayerQuit(e: PlayerQuitEvent) {
         playerSet.removeAll { it.first == e.player.name }

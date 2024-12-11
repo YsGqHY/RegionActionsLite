@@ -14,7 +14,7 @@ object ConfigSettings {
     lateinit var config: Configuration
         private set
 
-    private var cooldown: Long = 3000
+    var cooldown: Long = 3000
 
     var baffleCache = Baffle.of(cooldown, TimeUnit.MILLISECONDS)
 
@@ -23,8 +23,8 @@ object ConfigSettings {
     fun reloadConfig() {
         cooldown = config.getLong("CommandBaffle.time", 3000)
         actionTick = config.getLong("AreaSettings.TickAction", 20)
+        baffleCache = Baffle.of(cooldown, TimeUnit.MILLISECONDS)
         console().sendInfo("plugin-config-reload")
-
     }
 
 }
