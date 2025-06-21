@@ -1,6 +1,6 @@
 # Building
 
-* [Gradle](https://gradle.org/) - Dependency Management
+* [Gradle](https://gradle.org) - Dependency Management
 
 The GradleWrapper in included in this project.
 
